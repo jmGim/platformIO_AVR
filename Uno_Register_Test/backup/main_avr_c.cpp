@@ -72,6 +72,11 @@ unsigned long millis_custom(void) {
 int main(void) {
     Timer0_Init(); // 타이머 시작
     
+    // [TIP] 극한의 최적화가 필요하다면?
+    // 위 코드에서 쓴 `digitalWrite()`는 아두이노 라이브러리 함수라 실행 속도가 약간(약 3~4us) 걸립니다. 
+    // 1ms(1000us) 안에서 3개를 켜고 끄는 데는 전혀 문제가 없지만,
+    //  만약 ISR 안에서 제어할 핀이 수십 개로 늘어난다면 `PORTB ^= (1 << PB5);` 같은 순수 AVR 레지스터 직접 제어 방식으로 바꾸는 것이 좋습니다.
+    
     DDRB |= (1 << PB5); // 우노 내장 LED(13번 핀) 출력 설정
 
     unsigned long prev_time = 0;
