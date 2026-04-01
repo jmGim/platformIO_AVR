@@ -142,7 +142,7 @@ int main(void) {
 
     Timer0_Init(); // 타이머 시작
     
-    DDRB |= (1 << PB5); // 우노 내장 LED(13번 핀) 출력 설정
+   
 
     unsigned long prev_time = 0;
 

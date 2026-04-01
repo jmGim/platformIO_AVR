@@ -60,6 +60,20 @@ ISR(TIMER0_OVF_vect) {
     EIMSK |= (1 << INT0);
 }
 
+
+///////////////////////////////////////////////////////////
+
+void WDT_init(void)
+{
+    DDRB |= (1 << PB5);
+
+    cli();
+    WDTCSR |= (1 << WDCE) | (1 << WDE);
+    WDTCSR = (1 << WDIE) | (1 << WDP2) | (1 << WDP1);
+    // wdt_enable(WDTO_1S);
+    sei();
+}
+
 // 워치독 설정 함수 (8초 주기, 인터럽트 모드)
 void setup_watchdog_8s(void) {
     cli();
