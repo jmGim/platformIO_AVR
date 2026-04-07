@@ -9,5 +9,6 @@ unsigned char UART0_receive(void);
 void UART0_print_string(char *str);
 void UART0_print_1_byte_number(uint8_t n);
 
+void UART0_print_hex(uint8_t data);
 
 #endif /* UART0_H_ */

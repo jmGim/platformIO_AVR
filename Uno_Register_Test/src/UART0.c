@@ -46,3 +46,15 @@ void UART0_print_1_byte_number(uint8_t n)
         UART0_transmit(numString[i]);
 }
 
+// 1바이트 데이터를 16진수 포맷(예: "A3 ")으로 출력하는 함수
+void UART0_print_hex(uint8_t data)
+{
+    char hex_chars[] = "0123456789ABCDEF";
+    
+    // 상위 4비트를 16진수 문자로 변환하여 전송
+    UART0_transmit(hex_chars[(data >> 4) & 0x0F ]); 
+    // 하위 4비트를 16진수 문자로 변환하여 전송
+    UART0_transmit(hex_chars[data & 0x0F]);        
+    // 데이터 구분을 위해 스페이스바 출력
+    UART0_transmit(' ');                           
+}
