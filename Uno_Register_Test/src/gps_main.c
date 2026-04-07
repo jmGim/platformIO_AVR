@@ -1,87 +1,3 @@
-// // // #include "neo6m_gps.h"
-
-// // // int main(void) {
-// // //     char c;
-// // //     char buffer[100];
-// // //     int i = 0;
-// // //     char latitude[15], longitude[15];
-
-// // //     GPS_Init();
-
-// // //     while (1) {
-// // //         c = GPS_Read();
-// // //         if (c == '\n' || c == '\r') {
-// // //             if (i > 0) {
-// // //                 buffer[i] = '\0';
-// // //                 GPS_Parse(buffer, latitude, longitude);
-// // //                 // Print or use latitude/longitude here
-// // //                 i = 0;
-// // //             }
-// // //         } else {
-// // //             buffer[i++] = c;
-// // //         }
-// // //     }
-// // // }
-
-
-
-// // #define F_CPU 16000000UL  // Assuming a 16MHz clock (Arduino Uno/Nano standard)
-
-
-// // #include "neo6m_gps.h"
-// // #include <avr/io.h>
-// // #include <util/delay.h>
-// // #include "UART0.h"
-
-
-// // int main(void) {
-// //     GPS_Data myGPS;
-
-// //     // 1. Initialize Hardware
-// //     UART0_init(); // Uses your provided 9600 baud, 8N1 setup
-// //     GPS_init();   // Sets the DDR and PORT states for PD0/PD1
-
-// //     UART0_print_string("--- GPS GY-NEO6MV2 Initialization ----\r\n");
-// //     UART0_print_string("Waiting for satellite fix...\r\n");
-// //     // while (1) {
-// //     //     // 수신된 문자가 있으면 바로 PC로 송신 (Bypass)
-// //     //     char c = UDR0;
-// //     //     if (UCSR0A & (1<<RXC0)) {
-// //     //         UART0_transmit(c);
-// //     //     }
-// //     //     UART0_print_string(c);
-// //     // }
-// //     while (1) {
-// //         // 2. Wait for and parse a GPGGA sentence
-// //         GPS_read_GPGGA(&myGPS);
-
-// //         // 3. Print the results if the GPS has locked onto satellites
-// //         if (myGPS.is_valid) {
-// //             UART0_print_string("Time (UTC): ");
-// //             UART0_print_string(myGPS.time);
-// //             UART0_print_string("\r\n");
-
-// //             UART0_print_string("Latitude: ");
-// //             UART0_print_string(myGPS.latitude);
-// //             UART0_transmit(' ');
-// //             UART0_transmit(myGPS.lat_dir);
-// //             UART0_print_string("\r\n");
-
-// //             UART0_print_string("Longitude: ");
-// //             UART0_print_string(myGPS.longitude);
-// //             UART0_transmit(' ');
-// //             UART0_transmit(myGPS.lon_dir);
-// //             UART0_print_string("\r\n");
-            
-// //             UART0_print_string("------------------------\r\n");
-// //         } else {
-// //             // Uncomment the line below for debugging if you want to see it actively failing to find a fix
-// //             UART0_print_string("No GPS Fix yet. Make sure the antenna is near a window.\r\n");
-// //         }
-// //     }
-// //     return 0;
-// // }
-
 
 
 // /*
@@ -308,11 +224,35 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <stdlib.h>
 #include "UART0.h"
 #include "neo6m_gps.h"
 
 // #define TEST_UART_ONLY      /* STEP 0 : UART TX 만 테스트 */
 // #define TEST_RAW_BYPASS     /* STEP 1 : GPS 원본 NMEA 스트림을 그대로 출력 */
+
+
+// 좌표 환산 : NMEA 포맷(DDMM.MMMMM)을 구글지도 포맷(DD.DDDDDD) 실수형으로 변환합니다.
+float convert_nmea_to_dd(char* nmea_str, uint8_t is_longitude) {
+    char deg_str[4] = {0};
+    char min_str[15] = {0};
+    
+    // 위도는 앞 2자리, 경도는 앞 3자리가 '도(Degrees)' 입니다.
+    int deg_len = is_longitude ? 3 : 2;
+
+    // 도(Degrees) 부분 분리
+    strncpy(deg_str, nmea_str, deg_len);
+    // 분(Minutes) 부분 분리
+    strcpy(min_str, nmea_str + deg_len);
+
+    float degrees = atof(deg_str);
+    float minutes = atof(min_str);
+
+    // 환산 공식: 도 + (분 / 60)
+    return degrees + (minutes / 60.0);
+}
+
+
 
 int main(void)
 {
@@ -354,26 +294,50 @@ int main(void)
             char hh[3] = {myGPS.time[0], myGPS.time[1], '\0'};
             char mm[3] = {myGPS.time[2], myGPS.time[3], '\0'};
             char ss[3] = {myGPS.time[4], myGPS.time[5], '\0'};
-            UART0_print_string(hh);
+            UART0_print_string(atoi(hh) + atoi(myGPS.longitude));
             UART0_transmit(':');
             UART0_print_string(mm);
             UART0_transmit(':');
             UART0_print_string(ss);
-            UART0_print_string(" UTC\r\n");
+            UART0_print_string(" UTC+9\r\n");
 
+
+            // --- 환산 및 출력 부분 수정 ---
+            float lat_dd = convert_nmea_to_dd(myGPS.latitude, 0); // 위도 변환
+            float lon_dd = convert_nmea_to_dd(myGPS.longitude, 1); // 경도 변환
+
+            char lat_buf[20];
+            char long_buf[20];
+            // UART0_print_string("[FIX] Google Maps : ");
+            
+            // 위도 출력 (소수점 6자리까지)
+            
             UART0_print_string("[FIX] Latitude    : ");
-            UART0_print_string(myGPS.latitude);
+            dtostrf(lat_dd, 9, 6, lat_buf);
             UART0_transmit(' ');
             UART0_transmit(myGPS.lat_dir);  
             UART0_print_string("\r\n");
 
             UART0_print_string("[FIX] Longitude   : ");
-            UART0_print_string(myGPS.longitude);
+            // 경도 출력 (소수점 6자리까지)
+            dtostrf(lon_dd, 10, 6, long_buf);
+            UART0_print_string(long_buf);
             UART0_transmit(' ');
             UART0_transmit(myGPS.lon_dir);  
             UART0_print_string("\r\n");
+            
+            // https://easymap.info/ko/coordinates?lat=37.54240&lon=126.84124&z=18&mlat=37.5424&mlon=126.84124&c=
 
-            UART0_print_string("------------------------------------\r\n");
+            // https://www.google.com/maps/place/37.542178,126.841321
+            UART0_print_string("https://www.google.com/maps/place"); UART0_print_string(lat_buf); 
+            UART0_print_string(","); UART0_print_string(long_buf);
+
+            // UART0_print_string("https://easymap.info/ko/coordinates?lat="); UART0_print_string(lat_buf); 
+            // UART0_print_string("&lon="); UART0_print_string(long_buf);
+            // UART0_print_string("&z=18&mlat="); UART0_print_string(lat_buf); UART0_print_string("&mlon="); UART0_print_string(long_buf);
+            // UART0_print_string("&c=");
+            // UART0_print_string("\r\n");
+            // UART0_print_string("------------------------------------\r\n");
         }
         else
         {

@@ -339,9 +339,6 @@ void UART0_init(void)
     UCSR0C = 0x06;          // 8N1 설정
     UCSR0B = (1 << TXEN0);  // !!중요!! 송신(TX)만 활성화, RX는 비활성화
 
-    /* ── 2. 소프트웨어 UART RX 초기화 (GPS 수신용) ── */
-    DDRB &= ~(1 << RX_PIN); // 입력 모드
-    PORTB |= (1 << RX_PIN); // 내부 풀업 활성화
 }
 
 void UART0_transmit(char data)
