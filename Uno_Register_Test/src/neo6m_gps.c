@@ -1,35 +1,3 @@
-// #include "neo6m_gps.h"
-
-// void GPS_Init(void) {
-//     // Set baud rate
-//     UBRR0H = (unsigned char)(MYUBRR>>8);
-//     UBRR0L = (unsigned char)MYUBRR;
-//     // Enable receiver and transmitter
-//     UCSR0B = (1<<RXEN0)|(1<<TXEN0);
-//     // Set frame format: 8data, 1stop bit
-//     UCSR0C = (3<<UCSZ00);
-// }
-
-// char GPS_Read(void) {
-//     // Wait for data to be received
-//     while (!(UCSR0A & (1<<RXC0)));  
-//     // Get and return received data from buffer  / This flag bit is set when there are unread data in the receive buffer and cleared when the receive buffer is empty 
-//     return UDR0;
-// }
-
-// // Simple parsing for $GPRMC
-// void GPS_Parse(char* nmeaSentence, char* lat, char* lon) {
-//     if (strncmp(nmeaSentence, "$GPRMC", 6) == 0) {
-//         char *token = strtok(nmeaSentence, ",");
-//         int field = 0;
-//         while (token != NULL) {
-//             if (field == 3) strcpy(lat, token); // Latitude
-//             if (field == 5) strcpy(lon, token); // Longitude
-//             token = strtok(NULL, ",");
-//             field++;
-//         }
-//     }
-// }
 
 
 #include "neo6m_gps.h"
